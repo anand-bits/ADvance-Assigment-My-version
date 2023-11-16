@@ -118,7 +118,7 @@ public class Client {
         return response;
     }
 
-    private static void logResponse(String protocol, String response) {
-        LOGGER.info("Total time (" + protocol + "): " + response + " milliseconds");
-    }
+  //  private static void logResponse(String protocol, String response) {
+    //    LOGGER.info("Total time (" + protocol + "): " + response + " milliseconds");
+    
 }
