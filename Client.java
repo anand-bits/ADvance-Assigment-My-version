@@ -50,8 +50,8 @@ public class Client {
             }
 
             // Print the total times only
-            logResponse("TCP", tcpResponse.get());
-            logResponse("UDP", udpResponse.get());
+            // logResponse("TCP", tcpResponse.get());
+            // logResponse("UDP", udpResponse.get());
         }
 
         // Close the scanner outside the loop
