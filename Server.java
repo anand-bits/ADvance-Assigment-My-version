@@ -10,7 +10,7 @@ public class Server {
     public static void main(String[] args) {
         try {
             ServerSocket serverSocket = new ServerSocket(PORT);
-            System.out.println("Server started on port " + PORT + "Its using TCP");
+            System.out.println("Server started on port " + PORT + ". It's using TCP");
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -43,48 +43,19 @@ public class Server {
                     synchronized (lock) {
                         switch (parts[0]) {
                             case "put":
-                                if (parts.length >= 3) {
-                                    String key = parts[1];
-                                    String value = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
-
-                                    // Check if the key is already in the map
-                                    if (data.containsKey(key)) {
-                                        // If the key exists, append the new value to the list
-                                        data.get(key).add(value);
-                                    } else {
-                                        // If the key doesn't exist, create a new list with the value
-                                        List<String> values = new ArrayList<>();
-                                        values.add(value);
-                                        data.put(key, values);
-                                    }
-                                    response = "Put operation successful";
-                                } else {
-                                    response = "Invalid put command";
-                                }
+                                response = handlePutCommand(parts);
                                 break;
 
                             case "get":
-                                if (parts.length == 2) {
-                                    String key = parts[1];
-                                    List<String> values = data.getOrDefault(key, Collections.emptyList());
-                                    response = values.toString();
-                                } else {
-                                    response = "Invalid get command";
-                                }
+                                response = handleGetCommand(parts);
                                 break;
 
                             case "del":
-                                if (parts.length == 2) {
-                                    String key = parts[1];
-                                    data.remove(key);
-                                    response = "Delete operation successful";
-                                } else {
-                                    response = "Invalid delete command";
-                                }
+                                response = handleDeleteCommand(parts);
                                 break;
 
                             case "store":
-                                response = data.toString();
+                                response = handleStoreCommand();
                                 break;
 
                             case "exit":
@@ -101,6 +72,72 @@ public class Server {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        private String handlePutCommand(String[] parts) {
+            synchronized (lock) {
+                if (parts.length >= 3) {
+                    String key = parts[1];
+                    String value = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
+
+                    List<String> values = data.get(key);
+                    if (values == null) {
+                        values = new ArrayList<>();
+                        data.put(key, values);
+                    }
+                    values.add(value);
+
+                    return "Put operation successful";
+                } else {
+                    return "Invalid put command";
+                }
+            }
+        }
+
+        private String handleGetCommand(String[] parts) {
+            synchronized (lock) {
+                if (parts.length == 2) {
+                    String key = parts[1];
+                    List<String> values = data.getOrDefault(key, Collections.emptyList());
+                    return values.toString();
+                } else {
+                    return "Invalid get command";
+                }
+            }
+        }
+
+        private String handleDeleteCommand(String[] parts) {
+            synchronized (lock) {
+                if (parts.length == 2) {
+                    String key = parts[1];
+                    if (data.containsKey(key)) {
+                        data.remove(key);
+                        return "Delete operation successful";
+                    } else {
+                        return "Key not found. Delete operation failed.";
+                    }
+                } else {
+                    return "Invalid delete command";
+                }
+            }
+        }
+
+        private String handleStoreCommand() {
+            synchronized (lock) {
+                StringBuilder storeContent = new StringBuilder();
+                data.forEach((key, values) -> {
+                    storeContent.append(key).append(": ").append(values).append("\n");
+                });
+
+                String storeResult = storeContent.toString();
+
+                if (storeResult.length() > 65_000) {
+                    // Truncate the content and prepend 'TRIMMED:'
+                    storeResult = "TRIMMED: " + storeResult.substring(0, 65_000);
+                }
+
+                return storeResult;
             }
         }
     }
